@@ -3,20 +3,33 @@ from flask import Flask, render_template, request, jsonify
 from google import genai
 from dotenv import load_dotenv
 
+# تحميل متغيرات البيئة محلياً فقط
 load_dotenv()
 
 app = Flask(__name__)
 
-# إعداد عميل Gemini الجديد
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# إعداد العميل داخل دالة أو التأكد من وجود المفتاح لمنع انهيار التشغيل
+def get_ai_client():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    return genai.Client(api_key=api_key)
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/chat', methods=['POST'])
 def chat():
     user_input = request.json.get("message")
+    client = get_ai_client()
+    
+    if not client:
+        return jsonify({"error": "API Key is missing on Vercel settings"}), 500
+        
     try:
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
@@ -26,5 +39,5 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# مهم جداً لـ Vercel
+app.debug = False

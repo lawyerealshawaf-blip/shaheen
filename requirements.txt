@@ -1,6 +1,3 @@
 flask
 google-genai
 python-dotenv
-flask-sqlalchemy
-flask-socketio
-eventlet
